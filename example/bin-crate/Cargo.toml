@@ -1,0 +1,13 @@
+[package]
+name = "bin-crate"
+version = "0.1.0"
+authors = ["Russell Mull <russell@auxon.io>"]
+edition = "2018"
+
+[dependencies]
+libc = { version = "0.2.14", default-features = false }
+lib-crate = { path = "../lib-crate", default-features = false }
+
+[build-dependencies]
+cargo-5730 = { path="../.." }
+

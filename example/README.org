@@ -1,0 +1,6 @@
+* cargo-5730 example
+** lib-crate
+A trivial library with optional =nostd= support, configured with =no-default-features=.
+** bin-crate
+A =nostd= binary which depends on lib-crate as both a regular dependency and a
+build dependency.

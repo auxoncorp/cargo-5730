@@ -1,6 +1,7 @@
-* A workaround for Cargo-5730
+* A workaround for cargo#5730
 
-** The problem
+** Overview
+*** The problem
 Cargo can't deal with different kinds of dependencies having different features
 enabled. If you have both a regular dependency and a build dependency on a
 single library, and the build dependency has a different feature selection, that
@@ -10,7 +11,7 @@ not for the application itself.
 
 The projects namesake is, of course, https://github.com/rust-lang/cargo/issues/5730.
 
-** The solution
+*** The solution
 A build script is just a program that looks a special environment variables and
 writes magical values to stdout. We can just write a regular program that does
 that. This library helps you manage such a program.
@@ -19,6 +20,15 @@ that. This library helps you manage such a program.
 and you try to do this by hand, you'll note Cargo's recursive config resolution
 scheme gives you the same flags for the build script, preventing it from
 working. This library also works around that problem by building out of /tmp.)
+
+** Getting Started
+*** Dependencies
+=cargo5730= intentionally has no dependencies, to avoid adding fuel to
+dependency management fire it's attempting to extinguish.
+*** Building
+#+begin_src sh
+  cargo build
+#+end_src
 
 ** Usage
 1. Make a new crate, inside your regular crate, that will hold your build script. 
@@ -39,14 +49,37 @@ working. This library also works around that problem by building out of /tmp.)
 4. Add this library as the only build dependency in your main crate's `Cargo.toml`
    #+begin_src toml
      [build-dependencies]
-     cargo-5730 = "0.1"
+     cargo-5730 = { git = "https://github.com/auxoncorp/cargo-5370.git", branch = "master" }
    #+end_src
 
 5. Use this library to delegate to the build crate in main crate's build.rs
    #+begin_src rust
-     use cargo-5730;
+     use cargo_5730;
      
      fn main() {
-       cargo-5730::run_build_crate("build-script");
+       cargo_5730::run_build_crate("build-script");
      }
    #+end_src
+
+*** Example
+See the =example= directory for a cargo project set up as described above. To
+see the library in action, compile it with =cargo build -vv=. Among the other
+output, you will see something like:
+
+#+begin_src
+  [bin-crate 0.1.0] cargo:rerun-if-changed=build-script
+  [bin-crate 0.1.0] Copying build crate source from build-script to /tmp/build-script-c2717537984a6f51b94ee464d0cf90
+  [bin-crate 0.1.0]    Compiling lib-crate v0.1.0 (/home/mullr/devel/cargo-5730/example/lib-crate)
+  [bin-crate 0.1.0]      Running `CARGO_PKG_VERSION_MAJOR=0 CARGO=/home/mullr/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin/cargo CARGO_`
+  [bin-crate 0.1.0]    Compiling build-script v0.1.0 (/tmp/build-script-c2717537984a6f51b94ee464d0cf90)
+  [bin-crate 0.1.0]      Running `CARGO_PKG_VERSION_MAJOR=0 CARGO=/home/mullr/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin/cargo CARGO_`
+  [bin-crate 0.1.0]     Finished dev [unoptimized + debuginfo] target(s) in 0.40s
+  [bin-crate 0.1.0] Adding the numbers 1 and 2
+  [bin-crate 0.1.0] Build script says: the sum is 3
+  [bin-crate 0.1.0] Removing build crate staging dir: /tmp/build-script-c2717537984a6f51b94ee464d0cf90
+#+end_src
+
+
+** License
+© 2018, Auxon Inc.
+Please see the LICENSE file for more details.
