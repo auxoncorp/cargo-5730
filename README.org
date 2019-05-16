@@ -84,5 +84,5 @@ output, you will see something like:
 
 
 ** License
-© 2018, Auxon Inc.
+© 2019, Auxon Corporation
 Please see the LICENSE file for more details.
