@@ -9,7 +9,8 @@ gets used for the regular one as well. This is a big problem for no_std
 projects, where you have the standard library available for the build script but
 not for the application itself.
 
-The projects namesake is, of course, https://github.com/rust-lang/cargo/issues/5730.
+The project's namesake is, of course,
+https://github.com/rust-lang/cargo/issues/5730.
 
 *** The solution
 A build script is just a program that looks a special environment variables and
