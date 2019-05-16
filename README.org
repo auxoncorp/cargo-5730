@@ -49,7 +49,7 @@ It currently runs only on Linux.
      emacs build-script/Cargo.toml
    #+end_src
 
-4. Add this library as the only build dependency in your main crate's `Cargo.toml`
+4. Add this library as the only build dependency in your main crate's =Cargo.toml=
    #+begin_src toml
      [build-dependencies]
      cargo-5730 = { git = "https://github.com/auxoncorp/cargo-5370.git", branch = "master" }
