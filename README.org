@@ -24,7 +24,7 @@ working. This library also works around that problem by building out of /tmp.)
 
 ** Getting Started
 *** Dependencies
-=cargo5730= intentionally has no dependencies, to avoid adding fuel to
+=cargo-5730= intentionally has no dependencies, to avoid adding fuel to
 dependency management fire it's attempting to extinguish.
 
 It currently runs only on Linux.
