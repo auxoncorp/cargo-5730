@@ -60,17 +60,24 @@ fn cp_r(in_dir: &path::Path, out_dir: &path::Path) {
     );
 }
 
-fn qualify_cargo_toml_paths(cargo_toml_path: &path::Path, base_dir: &path::Path) {
-    // this is completely manual to avoid introducing any dependencies in this
+
+fn qualify_cargo_toml_paths_in_text(cargo_toml_content: &str, base_dir: &path::Path) -> String {
+    // This is completely manual to avoid introducing any dependencies in this
     // library, since the whole point is to work around dependency issues.
-    let mut cargo_toml = fs::read_to_string(cargo_toml_path).unwrap();
 
     // Lacking a real parser due to constraints, look for a couple of common
     // patterns. TODO: Roll a little parser for this.
+    let mut cargo_toml = cargo_toml_content.to_owned();
     cargo_toml = cargo_toml.replace("path = \"", &format!("path = \"{}/", base_dir.display()));
     cargo_toml = cargo_toml.replace("path=\"", &format!("path=\"{}/", base_dir.display()));
-    cargo_toml = cargo_toml.replace("path = \' ", &format!("path = \'{}/", base_dir.display()));
-    cargo_toml = cargo_toml.replace("path=\' ", &format!("path=\'{}/", base_dir.display()));
+    cargo_toml = cargo_toml.replace("path = '", &format!("path = '{}/", base_dir.display()));
+    cargo_toml = cargo_toml.replace("path='", &format!("path='{}/", base_dir.display()));
+    cargo_toml
+}
+
+fn qualify_cargo_toml_paths(cargo_toml_path: &path::Path, base_dir: &path::Path) {
+    let cargo_toml = fs::read_to_string(cargo_toml_path).unwrap();
+    let cargo_toml = qualify_cargo_toml_paths_in_text(&cargo_toml, &base_dir);
 
     fs::write(cargo_toml_path, cargo_toml).expect(&format!(
         "Failed to write modified Cargo.toml at {}",
@@ -161,4 +168,70 @@ pub fn run_build_crate<P: AsRef<path::Path>>(build_crate_src: P) {
     // Run the build script with its original source directory as the working
     // dir.
     run_build_script(&build_dir, &executable_name, &build_crate_src);
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_path_fixup_1() {
+        let input = r#"
+[dependencies]
+lib-crate = { path = "../../lib-crate" }
+"#;
+        let expected = r#"
+[dependencies]
+lib-crate = { path = "/basedir/../../lib-crate" }
+"#;
+
+        assert_eq!(qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
+                   expected.to_string());
+    }
+
+    #[test]
+    fn test_path_fixup_2() {
+        let input = r#"
+[dependencies]
+lib-crate = { path="../../lib-crate" }
+"#;
+        let expected = r#"
+[dependencies]
+lib-crate = { path="/basedir/../../lib-crate" }
+"#;
+
+        assert_eq!(qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
+                   expected.to_string());
+    }
+
+    #[test]
+    fn test_path_fixup_3() {
+        let input = r#"
+[dependencies]
+lib-crate = { path = '../../lib-crate' }
+"#;
+        let expected = r#"
+[dependencies]
+lib-crate = { path = '/basedir/../../lib-crate' }
+"#;
+
+        assert_eq!(qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
+                   expected.to_string());
+    }
+
+    #[test]
+    fn test_path_fixup_4() {
+        let input = r#"
+[dependencies]
+lib-crate = { path='../../lib-crate' }
+"#;
+        let expected = r#"
+[dependencies]
+lib-crate = { path='/basedir/../../lib-crate' }
+"#;
+
+        assert_eq!(qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
+                   expected.to_string());
+    }
+
 }
