@@ -1,0 +1,52 @@
+* A workaround for Cargo-5730
+
+** The problem
+Cargo can't deal with different kinds of dependencies having different features
+enabled. If you have both a regular dependency and a build dependency on a
+single library, and the build dependency has a different feature selection, that
+gets used for the regular one as well. This is a big problem for no_std
+projects, where you have the standard library available for the build script but
+not for the application itself.
+
+The projects namesake is, of course, https://github.com/rust-lang/cargo/issues/5730.
+
+** The solution
+A build script is just a program that looks a special environment variables and
+writes magical values to stdout. We can just write a regular program that does
+that. This library helps you manage such a program.
+
+(If you're using .cargo/config to set compiler flags for embedded development
+and you try to do this by hand, you'll note Cargo's recursive config resolution
+scheme gives you the same flags for the build script, preventing it from
+working. This library also works around that problem by building out of /tmp.)
+
+** Usage
+1. Make a new crate, inside your regular crate, that will hold your build script. 
+   #+begin_src sh
+     cargo new --bin build-script
+   #+end_src
+
+2. Your old build.rs is now main.rs for this new crate
+   #+begin_src sh
+     mv build.rs build-script/src/main.rs
+   #+end_src
+    
+3. Your old build-dependencies are now regular dependencies in this crate
+   #+begin_src sh
+     emacs build-script/Cargo.toml
+   #+end_src
+
+4. Add this library as the only build dependency in your main crate's `Cargo.toml`
+   #+begin_src toml
+     [build-dependencies]
+     cargo-5730 = "0.1"
+   #+end_src
+
+5. Use this library to delegate to the build crate in main crate's build.rs
+   #+begin_src rust
+     use cargo-5730;
+     
+     fn main() {
+       cargo-5730::run_build_crate("build-script");
+     }
+   #+end_src
