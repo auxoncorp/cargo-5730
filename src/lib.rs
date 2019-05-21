@@ -247,6 +247,4 @@ lib-crate = { path='/basedir/../../lib-crate' }
         );
     }
 
-    }
-
 }
