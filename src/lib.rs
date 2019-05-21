@@ -88,11 +88,12 @@ fn qualify_cargo_toml_paths(cargo_toml_path: &path::Path, base_dir: &path::Path)
     ));
 }
 
-fn compile_build_crate(build_dir: &BuildDir, cargo: &str, path: &str) {
+fn compile_build_crate(build_dir: &BuildDir, cargo: &str, path: &str, ssh_auth_sock: &str) {
     let res = process::Command::new(cargo)
         .args(&["build", "-vv"])
         .env_clear()
         .env("PATH", path)
+        .env("SSH_AUTH_SOCK", ssh_auth_sock)
         .current_dir(&build_dir.path)
         .stdout(process::Stdio::inherit())
         .stderr(process::Stdio::inherit())
@@ -167,7 +168,7 @@ pub fn run_build_crate<P: AsRef<path::Path>>(build_crate_src: P) {
     // the Cargo.toml
     qualify_cargo_toml_paths(&build_dir.path.join("Cargo.toml"), &base_dir);
 
-    compile_build_crate(&build_dir, &cargo, &path);
+    compile_build_crate(&build_dir, &cargo, &path, &ssh_auth_sock);
 
     // Run the build script with its original source directory as the working
     // dir.
