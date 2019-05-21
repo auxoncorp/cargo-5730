@@ -76,7 +76,10 @@ fn qualify_cargo_toml_paths_in_text(cargo_toml_content: &str, base_dir: &path::P
 }
 
 fn qualify_cargo_toml_paths(cargo_toml_path: &path::Path, base_dir: &path::Path) {
-    let cargo_toml = fs::read_to_string(cargo_toml_path).unwrap();
+    let cargo_toml = fs::read_to_string(cargo_toml_path).expect(&format!(
+        "Can't read Cargo.toml to stream from {}",
+        cargo_toml_path.display()
+    ));
     let cargo_toml = qualify_cargo_toml_paths_in_text(&cargo_toml, &base_dir);
 
     fs::write(cargo_toml_path, cargo_toml).expect(&format!(
@@ -144,9 +147,10 @@ pub fn run_build_crate<P: AsRef<path::Path>>(build_crate_src: P) {
             build_crate_src.display(),
         ));
 
-    let cargo = env::var("CARGO").unwrap();
-    let path = env::var("PATH").unwrap();
-    let base_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    let cargo = env::var("CARGO").expect("Can't get CARGO from env");
+    let path = env::var("PATH").expect("Can't get PATH from env");
+    let ssh_auth_sock = env::var("SSH_AUTH_SOCK").unwrap_or_default();
+    let base_dir = env::var("CARGO_MANIFEST_DIR").expect("Can't get CARGO_MANIFEST_DIR from env");
     let base_dir = path::Path::new(&base_dir).join("build-script");
 
     // Copy the build crate into /tmp to avoid the influence of .cargo/config
@@ -185,8 +189,10 @@ lib-crate = { path = "../../lib-crate" }
 lib-crate = { path = "/basedir/../../lib-crate" }
 "#;
 
-        assert_eq!(qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
-                   expected.to_string());
+        assert_eq!(
+            qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
+            expected.to_string()
+        );
     }
 
     #[test]
@@ -200,8 +206,10 @@ lib-crate = { path="../../lib-crate" }
 lib-crate = { path="/basedir/../../lib-crate" }
 "#;
 
-        assert_eq!(qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
-                   expected.to_string());
+        assert_eq!(
+            qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
+            expected.to_string()
+        );
     }
 
     #[test]
@@ -215,8 +223,10 @@ lib-crate = { path = '../../lib-crate' }
 lib-crate = { path = '/basedir/../../lib-crate' }
 "#;
 
-        assert_eq!(qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
-                   expected.to_string());
+        assert_eq!(
+            qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
+            expected.to_string()
+        );
     }
 
     #[test]
@@ -230,8 +240,12 @@ lib-crate = { path='../../lib-crate' }
 lib-crate = { path='/basedir/../../lib-crate' }
 "#;
 
-        assert_eq!(qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
-                   expected.to_string());
+        assert_eq!(
+            qualify_cargo_toml_paths_in_text(input, path::Path::new("/basedir")),
+            expected.to_string()
+        );
+    }
+
     }
 
 }
