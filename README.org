@@ -52,7 +52,7 @@ It currently runs only on Linux.
 4. Add this library as the only build dependency in your main crate's =Cargo.toml=
    #+begin_src toml
      [build-dependencies]
-     cargo-5730 = { git = "https://github.com/auxoncorp/cargo-5370.git", branch = "master" }
+     cargo-5730 = { git = "https://github.com/auxoncorp/cargo-5730.git", branch = "master" }
    #+end_src
 
 5. Use this library to delegate to the build crate in main crate's build.rs
