@@ -18,8 +18,11 @@ impl BuildDir {
             hex_str = hex_str + &format!("{:x}", digit)
         }
 
+        let mut dir = env::temp_dir();
+        dir.push(format!("build-script-{}", hex_str));
+
         BuildDir {
-            path: format!("/tmp/build-script-{}", hex_str).into(),
+            path: dir,
         }
     }
 }
@@ -27,7 +30,7 @@ impl BuildDir {
 impl Drop for BuildDir {
     fn drop(&mut self) {
         // some paranoia before running 'rm -rf'
-        assert!(self.path.starts_with("/tmp"));
+        assert!(self.path.starts_with(env::temp_dir()));
 
         println!("Removing build crate staging dir: {}", self.path.display());
         fs::remove_dir_all(&self.path).expect(&format!(
