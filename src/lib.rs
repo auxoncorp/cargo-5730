@@ -18,8 +18,11 @@ impl BuildDir {
             hex_str = hex_str + &format!("{:x}", digit)
         }
 
+        let mut dir = env::temp_dir();
+        dir.push(format!("build-script-{}", hex_str));
+
         BuildDir {
-            path: format!("/tmp/build-script-{}", hex_str).into(),
+            path: dir,
         }
     }
 }
@@ -27,7 +30,7 @@ impl BuildDir {
 impl Drop for BuildDir {
     fn drop(&mut self) {
         // some paranoia before running 'rm -rf'
-        assert!(self.path.starts_with("/tmp"));
+        assert!(self.path.starts_with(env::temp_dir()));
 
         println!("Removing build crate staging dir: {}", self.path.display());
         fs::remove_dir_all(&self.path).expect(&format!(
@@ -88,12 +91,14 @@ fn qualify_cargo_toml_paths(cargo_toml_path: &path::Path, base_dir: &path::Path)
     ));
 }
 
-fn compile_build_crate(build_dir: &BuildDir, cargo: &str, path: &str, ssh_auth_sock: &str) {
+fn compile_build_crate(build_dir: &BuildDir, cargo: &str, path: &str, ssh_auth_sock: &str, rustup_home: &str, rustup_toolchain: &str) {
     let res = process::Command::new(cargo)
         .args(&["build", "-vv"])
         .env_clear()
         .env("PATH", path)
         .env("SSH_AUTH_SOCK", ssh_auth_sock)
+        .env("RUSTUP_HOME", rustup_home)
+        .env("RUSTUP_TOOLCHAIN", rustup_toolchain)
         .current_dir(&build_dir.path)
         .stdout(process::Stdio::inherit())
         .stderr(process::Stdio::inherit())
@@ -154,6 +159,9 @@ pub fn run_build_crate<P: AsRef<path::Path>>(build_crate_src: P) {
     let base_dir = env::var("CARGO_MANIFEST_DIR").expect("Can't get CARGO_MANIFEST_DIR from env");
     let base_dir = path::Path::new(&base_dir).join("build-script");
 
+    let rustup_home = env::var("RUSTUP_HOME").unwrap_or_default();
+    let rustup_toolchain = env::var("RUSTUP_TOOLCHAIN").unwrap_or_default();
+
     // Copy the build crate into /tmp to avoid the influence of .cargo/config
     // settings in the build crate's parent, which cargo gives us no way to
     // ignore.
@@ -168,7 +176,7 @@ pub fn run_build_crate<P: AsRef<path::Path>>(build_crate_src: P) {
     // the Cargo.toml
     qualify_cargo_toml_paths(&build_dir.path.join("Cargo.toml"), &base_dir);
 
-    compile_build_crate(&build_dir, &cargo, &path, &ssh_auth_sock);
+    compile_build_crate(&build_dir, &cargo, &path, &ssh_auth_sock, &rustup_home, &rustup_toolchain);
 
     // Run the build script with its original source directory as the working
     // dir.
