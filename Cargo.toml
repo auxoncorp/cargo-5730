@@ -3,7 +3,6 @@ name = "cargo-5730"
 version = "0.1.0"
 authors = ["Russell Mull <russell@auxon.io>"]
 edition = "2018"
-license = "MIT"
 license-file = "LICENSE"
 description = "A workaround for cargo#5730"
 homepage = "https://github.com/auxoncorp/cargo-5730"
