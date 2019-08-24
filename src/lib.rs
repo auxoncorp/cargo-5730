@@ -21,9 +21,7 @@ impl BuildDir {
         let mut dir = env::temp_dir();
         dir.push(format!("build-script-{}", hex_str));
 
-        BuildDir {
-            path: dir,
-        }
+        BuildDir { path: dir }
     }
 }
 
@@ -91,7 +89,15 @@ fn qualify_cargo_toml_paths(cargo_toml_path: &path::Path, base_dir: &path::Path)
     ));
 }
 
-fn compile_build_crate(build_dir: &BuildDir, cargo: &str, path: &str, ssh_auth_sock: &str, rustup_home: &str, rustup_toolchain: &str) {
+fn compile_build_crate(
+    build_dir: &BuildDir,
+    cargo: &str,
+    path: &str,
+    ssh_auth_sock: &str,
+    rustup_home: &str,
+    rustup_toolchain: &str,
+    build_crate_src: &path::Path,
+) {
     let res = process::Command::new(cargo)
         .args(&["build", "-vv"])
         .env_clear()
@@ -99,6 +105,7 @@ fn compile_build_crate(build_dir: &BuildDir, cargo: &str, path: &str, ssh_auth_s
         .env("SSH_AUTH_SOCK", ssh_auth_sock)
         .env("RUSTUP_HOME", rustup_home)
         .env("RUSTUP_TOOLCHAIN", rustup_toolchain)
+        .env("CARGO_TARGET_DIR", build_crate_src.join("target"))
         .current_dir(&build_dir.path)
         .stdout(process::Stdio::inherit())
         .stderr(process::Stdio::inherit())
@@ -111,12 +118,17 @@ fn compile_build_crate(build_dir: &BuildDir, cargo: &str, path: &str, ssh_auth_s
         build_dir.path.display(),
         res
     );
+
+    // copy back the 'Cargo.lock' file, to speed up subsequent compilations
+    cp_r(
+        &build_dir.path.join("Cargo.lock"),
+        &build_crate_src.join("Cargo.lock"),
+    );
 }
 
-fn run_build_script(build_dir: &BuildDir, executable_name: &str, working_dir: &path::Path) {
+fn run_build_script(executable_name: &str, working_dir: &path::Path) {
     // run the build script
-    let build_script_path = build_dir
-        .path
+    let build_script_path = working_dir
         .join("target")
         .join("debug")
         .join(executable_name);
@@ -140,7 +152,7 @@ fn run_build_script(build_dir: &BuildDir, executable_name: &str, working_dir: &p
 }
 
 pub fn run_build_crate<P: AsRef<path::Path>>(build_crate_src: P) {
-    let build_crate_src = build_crate_src.as_ref();
+    let build_crate_src = build_crate_src.as_ref().canonicalize().unwrap();
     println!("cargo:rerun-if-changed={}", build_crate_src.display());
 
     let build_dir = BuildDir::new();
@@ -170,17 +182,25 @@ pub fn run_build_crate<P: AsRef<path::Path>>(build_crate_src: P) {
         &build_crate_src.display(),
         build_dir.path.display()
     );
-    cp_r(build_crate_src, &build_dir.path);
+    cp_r(&build_crate_src, &build_dir.path);
 
     // Having copied the crate, we need to fix any relative paths that were in
     // the Cargo.toml
     qualify_cargo_toml_paths(&build_dir.path.join("Cargo.toml"), &base_dir);
 
-    compile_build_crate(&build_dir, &cargo, &path, &ssh_auth_sock, &rustup_home, &rustup_toolchain);
+    compile_build_crate(
+        &build_dir,
+        &cargo,
+        &path,
+        &ssh_auth_sock,
+        &rustup_home,
+        &rustup_toolchain,
+        &build_crate_src,
+    );
 
     // Run the build script with its original source directory as the working
     // dir.
-    run_build_script(&build_dir, &executable_name, &build_crate_src);
+    run_build_script(&executable_name, &build_crate_src);
 }
 
 #[cfg(test)]
@@ -254,5 +274,4 @@ lib-crate = { path='/basedir/../../lib-crate' }
             expected.to_string()
         );
     }
-
 }
