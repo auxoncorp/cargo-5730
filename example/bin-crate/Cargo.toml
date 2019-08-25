@@ -11,3 +11,5 @@ lib-crate = { path = "../lib-crate", default-features = false }
 [build-dependencies]
 cargo-5730 = { path="../.." }
 
+[real-build-dependencies]
+lib-crate = { path = "../lib-crate" }

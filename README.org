@@ -34,35 +34,31 @@ It currently runs only on Linux.
 #+end_src
 
 ** Usage
-1. Make a new crate, inside your regular crate, that will hold your build script. 
-   #+begin_src sh
-     cargo new --bin build-script
-   #+end_src
-
-2. Your old build.rs is now main.rs for this new crate
-   #+begin_src sh
-     mv build.rs build-script/src/main.rs
-   #+end_src
-    
-3. Your old build-dependencies are now regular dependencies in this crate
-   #+begin_src sh
-     emacs build-script/Cargo.toml
-   #+end_src
-
-4. Add this library as the only build dependency in your main crate's =Cargo.toml=
+1. Add this library as the only build dependency in your main crate's
+   =Cargo.toml=. Put the build dependencies you actually want inside
+   =[real-build-dependencies]=.
    #+begin_src toml
      [build-dependencies]
-     cargo-5730 = { git = "https://github.com/auxoncorp/cargo-5730.git", branch = "master" }
+     cargo-5730 = "0.2"
+
+     [real-build-dependencies]
+     great-crate = "1.0"
    #+end_src
 
-5. Use this library to delegate to the build crate in main crate's build.rs
+2. Modify your build.rs to run your real script behind the 'RealBuild' cfg flag,
+   or to invoke this crate otherwise.
    #+begin_src rust
-     use cargo_5730;
-     
+     #[cfg(not(RealBuild))]
      fn main() {
-       cargo_5730::run_build_crate("build-script");
+         cargo_5730::run_build_script();
+     }
+
+     #[cfg(RealBuild)]
+     fn main() {
+         great_crate::succeed();
      }
    #+end_src
+
 
 *** Example
 See the =example= directory for a cargo project set up as described above. To
