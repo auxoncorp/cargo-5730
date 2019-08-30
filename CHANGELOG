@@ -1,3 +1,6 @@
+Version 0.2.1:
+ - Fix bug invoking compiled build script
+
 Version 0.2:
 - Work with your normal build.rs and Cargo.toml, instead of requiring a separate crate.
 - Don't redownload deps every time
