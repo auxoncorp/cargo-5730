@@ -36,24 +36,24 @@ It currently runs only on Linux.
 ** Usage
 1. Add this library as the only build dependency in your main crate's
    =Cargo.toml=. Put the build dependencies you actually want inside
-   =[real-build-dependencies]=.
+   =[workaround-build-dependencies]=.
    #+begin_src toml
      [build-dependencies]
      cargo-5730 = "0.2"
 
-     [real-build-dependencies]
+     [workaround-build-dependencies]
      great-crate = "1.0"
    #+end_src
 
-2. Modify your build.rs to run your real script behind the 'RealBuild' cfg flag,
+2. Modify your build.rs to run your real script behind the 'workaround_build' flag,
    or to invoke this crate otherwise.
    #+begin_src rust
-     #[cfg(not(RealBuild))]
+     #[cfg(not(workaround_build))]
      fn main() {
          cargo_5730::run_build_script();
      }
 
-     #[cfg(RealBuild)]
+     #[cfg(workaround_build)]
      fn main() {
          great_crate::succeed();
      }

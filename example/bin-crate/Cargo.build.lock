@@ -5,7 +5,7 @@ name = "lib-crate"
 version = "0.1.0"
 
 [[package]]
-name = "real-build-script"
+name = "workaround-build-script"
 version = "0.1.0"
 dependencies = [
  "lib-crate 0.1.0",

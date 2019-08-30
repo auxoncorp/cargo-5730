@@ -92,7 +92,7 @@ fn compile_build_crate(
         .env("RUSTUP_HOME", rustup_home)
         .env("RUSTUP_TOOLCHAIN", rustup_toolchain)
         .env("CARGO_TARGET_DIR", build_crate_src.join("build-script-target"))
-        .env("RUSTFLAGS", "--cfg RealBuild")
+        .env("RUSTFLAGS", "--cfg workaround_build")
         .current_dir(&build_dir.path)
         .stdout(process::Stdio::inherit())
         .stderr(process::Stdio::inherit())
@@ -133,8 +133,8 @@ fn run_compiled_build_script(executable_name: &str, working_dir: &path::Path) {
 }
 
 /// Compile and run build.rs from cwd
-/// - use 'real-build-dependencies' from Cargo.toml
-/// - Build it with the RealBuild configuration
+/// - use 'workaround-build-dependencies' from Cargo.toml
+/// - Build it with the workaround_build configuration
 /// - Copy Cargo.lock back here to build.Cargo.lock
 pub fn run_build_script() {
     let base_dir = env::var("CARGO_MANIFEST_DIR").expect("Can't get CARGO_MANIFEST_DIR from env");
@@ -173,14 +173,14 @@ pub fn run_build_script() {
     ));
 
     // synthesize Cargo.toml
-    let deps_section = read_toml_section(&cargo_toml, "real-build-dependencies");
+    let deps_section = read_toml_section(&cargo_toml, "workaround-build-dependencies");
 
     // Fix any relative paths that were in the Cargo.toml
     let deps_section = qualify_cargo_toml_paths_in_text(&deps_section, &base_dir);
     let cargo_toml_content = format!(
         r#"
 [package]
-name = "real-build-script"
+name = "workaround-build-script"
 version = "0.1.0"
 authors = ["The cargo-5730 crate"]
 edition = "2018"
