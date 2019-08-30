@@ -224,7 +224,7 @@ edition = "2018"
 
     // Run the build script with its original source directory as the working
     // dir.
-    run_compiled_build_script("real-build-script", &base_dir);
+    run_compiled_build_script("workaround-build-script", &base_dir);
 }
 
 #[cfg(test)]
