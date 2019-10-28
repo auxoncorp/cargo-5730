@@ -59,6 +59,15 @@ It currently runs only on Linux.
      }
    #+end_src
 
+3. After building, you'll have a =build-script-target= directory and
+   =Cargo.build.lock= file. The former is the target dir for your build script,
+   and should be ignored in the same way as =target=. The lock file is just like
+   =Cargo.lock=, but for your build script; you should probably check it in.
+
+   #+begin_src sh
+     git add Cargo.build.lock
+     echo build-script-target >> .gitignore
+   #+end_src
 
 *** Example
 See the =example= directory for a cargo project set up as described above. To
